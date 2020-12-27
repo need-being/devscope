@@ -37,9 +37,15 @@ func runConnect(ctx *cli.Context) error {
 	defer conn.Close()
 	log.Infof("Connected to %v", address)
 
-	cmd := exec.Command(ctx.String("shell"))
+	shell := ctx.String("shell")
+	cmd := exec.Command(shell)
 	cmd.Stdin = io.TeeReader(conn, os.Stdout)
 	cmd.Stdout = io.MultiWriter(conn, os.Stdout)
 	cmd.Stderr = io.MultiWriter(conn, os.Stderr)
-	return cmd.Run()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	log.Infof("Running %s", shell)
+
+	return cmd.Wait()
 }
