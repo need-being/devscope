@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/urfave/cli/v2"
@@ -16,10 +17,15 @@ var connectCommand = &cli.Command{
 	UsageText: "devscope connect [command options] <address>",
 	Action:    runConnect,
 	Flags: []cli.Flag{
-		&cli.StringFlag{
+		&cli.StringSliceFlag{
+			Name:    "env",
+			Aliases: []string{"e"},
+			Value:   cli.NewStringSlice("PS1=$ "),
+		},
+		&cli.StringSliceFlag{
 			Name:    "shell",
 			Aliases: []string{"s"},
-			Value:   "/bin/sh",
+			Value:   cli.NewStringSlice("/bin/sh", "-i"),
 		},
 	},
 }
@@ -37,15 +43,20 @@ func runConnect(ctx *cli.Context) error {
 	defer conn.Close()
 	log.Infof("Connected to %v", address)
 
-	shell := ctx.String("shell")
-	cmd := exec.Command(shell)
+	shell := ctx.StringSlice("shell")
+	if len(shell) == 0 {
+		return errors.New("missing shell")
+	}
+	cmd := exec.Command(shell[0], shell[1:]...)
+	cmd.Env = append(os.Environ(), ctx.StringSlice("env")...)
 	cmd.Stdin = io.TeeReader(conn, os.Stdout)
 	cmd.Stdout = io.MultiWriter(conn, os.Stdout)
 	cmd.Stderr = io.MultiWriter(conn, os.Stderr)
 	if err := cmd.Start(); err != nil {
 		return err
 	}
-	log.Infof("Running %s", shell)
+	log.Infof("Running %v", strings.Join(shell, " "))
+	log.Info("Control transferred to Server")
 
 	return cmd.Wait()
 }
