@@ -2,10 +2,10 @@
 The tool `devscope` allows the server to control the client, while the client can see what the server is doing.
 It is useful for remote assistance, and explore non-interactive develop environments such as containers by cloud providers.
 
-## Build and Install
-Installation by building requires go `>= 1.15`. Simply, run
+## Build
+Building requires go `>= 1.15`. Simply, run
 ```shell
-go install -i github.com/need-being/devscope/cmd/devscope
+go build ./cmd/devscope
 ```
 
 ## Example Run
