@@ -34,6 +34,7 @@ func runListen(ctx *cli.Context) error {
 	}
 	defer conn.Close()
 	log.Infof("Accepted from %v", conn.RemoteAddr())
+	listener.Close() // Close to free port
 
 	go func() {
 		_, err := io.Copy(conn, os.Stdin)
